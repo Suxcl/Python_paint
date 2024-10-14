@@ -22,11 +22,6 @@ Uwagi:
 
     Można wykorzystać biblioteki do rysowania.
 
-TODO:
-    zmiana kształtu przy uzyciu myszy i pola tesktowego
-    połaczenie pola tekstowego z wybranym kształtem
-    resizing linii
-
 ------------------------------------------------------------------------
 Projekt 2
 Wymagania na najwyższą ocenę:
