@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import Combobox
 import json
+from shapes import *
 # from layout import setup_layout
 # todo
 '''
@@ -43,100 +44,22 @@ Wymagania na najwyższą ocenę:
 Uwagi:
 
     Zabronione stosowanie bibliotek do wczytywania plików PPM
-    Dozwolone stosowanie bibliotek do wczytywania plików JPEG
+    JPEG gotowe biliteki
+    wydajne wczytywanie ppm6
 
+
+
+skalowanie wartosci ppm3
+1000
+
+344
+
+344/max*255
 ------------------------------------------------------------------------
 
 '''
 
-class Line: 
-    def __init__(self, x0, y0, x1, y1, c_id):
-        self.canvas_id = c_id
-        self.x0 = x0
-        self.y0 = y0
-        self.x1 = x1
-        self.y1 = y1
 
-    def getCords(self):
-        return self.x0, self.y0, self.x1, self.y1
-
-    def resize(self, r):
-        self.x0 = self.x0 - r
-        self.y0 = self.y0 - r
-        self.x1 = self.x1 + r
-        self.y1 = self.y1 + r
-    
-    def newCenter(self, x, y):
-        self.x0 = self.x0 + x
-        self.y0 = self.y0 + y
-        self.x1 = self.x1 + x
-        self.y1 = self.y1 + y
-    
-    def __repr__(self):
-        return f"Line({self.x0}, {self.y0}, {self.x1}, {self.y1}, {self.canvas_id})"
-    
-    def className(self):
-        return "Line"
-    
-class Rectangle:
-    def __init__(self, x0, y0, x1, y1, c_id):
-        self.canvas_id = c_id
-        self.x0 = x0
-        self.y0 = y0
-        self.x1 = x1
-        self.y1 = y1
-
-    def getCords(self):
-        return self.x0, self.y0, self.x1, self.y1
-    
-    def newCenter(self, x, y):
-        self.x0 = self.x0 + x
-        self.y0 = self.y0 + y
-        self.x1 = self.x1 + x
-        self.y1 = self.y1 + y
-    
-    def resize(self, r):
-        self.x0 = self.x0 - r
-        self.y0 = self.y0 - r
-        self.x1 = self.x1 + r
-        self.y1 = self.y1 + r
-    def __repr__(self):
-        return f"Rect({self.x0}, {self.y0}, {self.x1}, {self.y1}, {self.canvas_id})"
-    
-    def className(self):
-        return "Rect"
-
-class Circle:
-    def __init__(self, x, y, r, c_id):
-        self.canvas_id = c_id
-        self.center_x = x
-        self.center_y = y
-        self.x0 = x - r
-        self.y0 = y - r
-        self.x1 = x + r
-        self.y1 = y + r
-        self.r = r
-        
-    def newCenter(self, x, y):
-        self.center_x = x
-        self.center_y = y
-    
-    def resize(self, r):
-        self.x0 = self.center_x - r
-        self.y0 = self.center_y - r
-        self.x1 = self.center_x + r
-        self.y1 = self.center_y + r
-        self.r = self.r + r
-    
-    def getCords(self):
-        return self.x0, self.y0, self.x1, self.y1
-    
-    def className(self):
-        return "Circ"
-    
-    def __repr__(self):
-        return f"Circ({self.center_x}, {self.center_y}, {self.r}, {self.canvas_id})"
-    
     
 class Paint:
     def __init__(self, canvas):
@@ -156,14 +79,13 @@ class Paint:
         
         canvas.bind("<Button-1>", self.onMouse1)                # mouse 1 click bind 
         canvas.bind("<Button-3>", self.onMouse3)                # mouse 3 click bind
+        #canvas.bind("<Button-2>", self.onMouse2)                # mouse 2 click bind
         canvas.bind("<MouseWheel>", self.onScroll)                  
-        canvas.bind("<ButtonRelease-1>", self.onReleaseMouse1)  # mouse 1 release bind
+        # canvas.bind("<ButtonRelease-1>", self.onReleaseMouse1)  # mouse 1 release bind
+        #canvas.bind("<ButtonRelease-2>", self.onReleaseMouse2)  # mouse 1 release bind
         canvas.bind("<ButtonRelease-3>", self.onReleaseMouse3)  # mouse 3 release bind
         
-    def setClickXY(self, x, y):
-        self.click_x = x
-        self.click_y = y 
-        print("click", self.click_x, self.click_y)      
+      
         
     def clearDrawingPoints(self):
         self.first_point_x = None
@@ -177,16 +99,22 @@ class Paint:
             return
         id = self.selected_shape.canvas_id
         self.canvas.tag_unbind(id, "<B1-Motion>")
+        self.canvas.tag_bind(id, "<B2-Motion>")
         if(self.selected_shape.className() != "Line"):
             self.canvas.itemconfig(id, outline = "black", width = 1)
         self.selected_shape = None
         print("selected shape cleared")
 
-
+    def setClickXY(self, x, y):
+        self.click_x = x
+        self.click_y = y 
+        print("click", self.click_x, self.click_y) 
+           
     def setFirstPointXY(self, x, y):
         self.first_point_x = x
         self.first_point_y = y
         print("first point", self.first_point_x, self.first_point_y)
+        
     def setSecondPointXY(self, x, y):
         self.second_point_x = x
         self.second_point_y = y
@@ -214,12 +142,13 @@ class Paint:
             y1 = self.first_point_y
             x2 = self.second_point_x
             y2 = self.second_point_y
+            
             if(self.combo_shape == "Line"):
                 self.drawLineEntry(x1, y1, x2, y2)
             elif(self.combo_shape == "Rectangle"):
                 self.drawRectEntry(x1, y1, x2, y2)
             elif(self.combo_shape == "Circle"):
-                self.drawCircleEntry(x,y, radius = 10, mouse = True, x2 = x2, y2 = y2)
+                self.drawCircleEntry(x1,y1, x2, y2)
             self.clearDrawingPoints()
     
 
@@ -232,31 +161,50 @@ class Paint:
                 for shape in self.shapes:
                     if shape.canvas_id == item_id:
                         self.selected_shape = shape
+                        showSelShapeVal(shape)
                         break
                 print("selected shape ", self.selected_shape.canvas_id)
                 self.canvas.tag_bind(item_id, "<B1-Motion>", self.onDragM1)
+                self.canvas.tag_bind(item_id, "<B2-Motion>", self.onDragM2)
                 if(self.selected_shape.className() != "Line"):
                     self.canvas.itemconfig(item_id, outline = "red", width = 2)
                 break
         else:
             pass
     
+    def onMouse2(self, event):
+        if self.selected_shape == None:
+            return 
+        id = self.selected_shape.canvas_id
+        self.canvas.tag_bind(id, "<B2-Motion>", self.onDragM2)
+        print("on mouse 2 added tab gind")
+        
+    
+        
     def onMouse3(self, event):
         x,y = event.x, event.y
         # self.setClickXY(x,y)
         
     
-    def onReleaseMouse1(self, event):
-        if self.selected_shape != None:
-            #canvas.tag_unbind(self.selected_shape.canvas_id, "<B1-Motion>")
-            pass
+    # def onReleaseMouse1(self, event):
+    #     if self.selected_shape != None:
+    #         #canvas.tag_unbind(self.selected_shape.canvas_id, "<B1-Motion>")
+    #         pass
             
-        self.setClickXY(None, None)
+    #     self.setClickXY(None, None)
+    
+    def onReleaseMouse2(self, event):
+        if self.selected_shape == None:
+            return 
+        id = self.selected_shape.canvas_id
+        self.canvas.tag_unbind(id, "<B3-Motion>")
+        print("on mouse 2 removed tab gind")
     
     def onReleaseMouse3(self, event):
         self.clearDrawingPoints()
         self.clearSelectedShape()
         self.setClickXY(None, None)
+        clearInputs()
     
     def onScroll(self, event):
         if(self.selected_shape == None):
@@ -265,14 +213,14 @@ class Paint:
             self.selected_shape.resize(1)
         elif event.delta < 0: # scroll down
             self.selected_shape.resize(-1)   
-        
-        
+        showSelShapeVal(self.selected_shape)
         x1,y1,x2,y2 = self.selected_shape.getCords()
         canvas.coords(self.selected_shape.canvas_id, x1,y1,x2,y2)
     
     
     def actionDraw(self):
         self.selected_action = "draw"
+        self.clearSelectedShape()
         print("selected_action: ", self.selected_action)
         
     def actionMove(self):
@@ -288,21 +236,27 @@ class Paint:
         dy = event.y - self.click_y
            
         canvas.move(self.selected_shape.canvas_id, dx,dy)
-        
+        showSelShapeVal(self.selected_shape)
         self.setClickXY(event.x, event.y)
-        self.selected_shape.newCenter(event.x, event.y)
+        print("event in drag: ", event.x, event.y)
+        print("shape in drag 1: ", self.selected_shape.getCords())
+        self.selected_shape.move(dx, dy)        
+         
+        print("shape in drag 2 : ", self.selected_shape.getCords())
         
-    def onDragM3(self, event):
+    def onDragM2(self, event):
         dx = event.x - self.click_x
         dy = event.y - self.click_y
-        shape_y = self.selected_shape.center_y
-        
-        r = event.y - shape_y
-        
-        self.selected_shape.resize(r)
-        x1,y1,x2,y2 = self.selected_shape.getCords()
-        canvas.coords(self.selected_shape.canvas_id, x1,y1,x2,y2)
-        self.setClickXY(event.x, event.y)
+        print("shape in drag 3 : ", self.selected_shape.getCords())
+        print("shape in drag 3 : ", dx, dy)
+        id = self.selected_shape.canvas_id
+        x = self.selected_shape.x0
+        y = self.selected_shape.y0
+        x1 = self.selected_shape.x1
+        y1 = self.selected_shape.y1
+        self.selected_shape.newCoords(x,y, x1+dx, y1+dy)
+        self.canvas.coords(id, x,y,x+dx, y+dy)
+        #self.setClickXY(event.x, event.y)
 
     def drawLineEntry(self, x1, y1, x2, y2):
         if(x1 == "" or y1 == "" or x2 == "" or y2 == ""):
@@ -320,21 +274,32 @@ class Paint:
         self.shapes.append(rect)
         print("Rectangle drawn", rect.getCords())
 
-    def drawCircleEntry(self, x, y, radius = 10, mouse = False, x2 = None, y2 = None):
-        id = None
-        if mouse == False:
-            if (x == "" or y == "" or radius == ""):
-                return
-            x = int(x)
-            y = int(y)
-            radius = int(radius)
-            id = self.canvas.create_oval(x-radius, y-radius, x+radius, y+radius)
-        else:
-            id = self.canvas.create_oval(x, y, x2, y2)
-        circle = Circle(x, y, radius, id)
+    # def drawCircleEntry(self, x, y, radius = 10, mouse = False, x2 = None, y2 = None):
+    #     id = None
+    #     if mouse == False:
+    #         if (x == "" or y == "" or radius == ""):
+    #             return
+    #         x = int(x)
+    #         y = int(y)
+    #         radius = int(radius)
+    #         id = self.canvas.create_oval(x-radius, y-radius, x+radius, y+radius)
+    #     else:
+    #         x = int(x)
+    #         y = int(y)
+    #         radius = int(radius)
+    #         id = self.canvas.create_oval(x, y, x2, y2)
+    #     circle = Circle(x, y, radius, id)
+    #     self.shapes.append(circle)
+    #     print("Circle drawn", circle.getCords())        
+        
+    def drawCircleEntry(self, x, y, x2, y2):
+        x = int(x)
+        y = int(y)
+        # radius = int(radius)
+        id = self.canvas.create_oval(x, y, x2, y2)
+        circle = Circle(x, y, x2, y2, id)
         self.shapes.append(circle)
         print("Circle drawn", circle.getCords())        
-        
     def importShapes(self, shapes):
         self.shapes = []
         for shape in shapes:
@@ -360,76 +325,73 @@ class Paint:
                 radius = int(shape_list[2])
                 self.drawCircleEntry(x, y, radius)
             
+    def editSelShape(self, x_1, y_1, x_2, y_2):
+        if(self.selected_shape == None):
+            return
+        id = self.selected_shape.canvas_id
+        self.selected_shape.newCoords(x_1, y_1, x_2, y_2)
+        self.canvas.coords(id, x_1, y_1, x_2, y_2)
+        # if self.selected_shape.className() == "Line":
+        #     self.selected_shape.newCoords(x_1, y_1, x_2, y_2)
+        #     self.canvas.coords(id, x_1, y_1, x_2, y_2)
+        # if self.selected_shape.className() == "Rect":
+        #     self.selected_shape.newCoords(x_1, y_1, x_2, y_2)
+        #     self.canvas.coords(id, x_1, y_1, x_2, y_2)
+        # if self.selected_shape.className() == "Circ":
+        #     self.selected_shape.newCoords(x_1, y_1, x_2, y_2)
+        #     self.canvas.coords(id, x0, y0, x1, y1)
         
 # ==================== 
 #       
 # Tkinker application        
 #        
 # ====================       
-        
+
 def drawButton():
+    x_1 = int(x1.get())
+    y_1 = int(y1.get())
+    x_2 = int(x2.get())
+    y_2 = int(y2.get())
     shape = shape_combo.get()
-    print("siema", shape)
-    if(shape == "Line" or shape == "Rectangle"):    
-        x_1 = x1.get()
-        y_1 = y1.get()
-        x_2 = x2.get()
-        y_2 = y2.get()
-        print("siema", x_1, y_1, x_2, y_2)
-        if shape == "Line":
-            paint.drawLineEntry(x_1, y_1, x_2, y_2)
-        else: paint.drawRectEntry(x_1, y_1, x_2, y_2)
-    else: paint.drawCircleEntry(circle_x.get(), circle_y.get(), circle_radius.get())
+    
+    if(paint.selected_shape != None):
+        paint.editSelShape(x_1, y_1, x_2, y_2)
+        return
+    if shape == "Line":
+        paint.drawLineEntry(x_1, y_1, x_2, y_2)
+    elif shape == "Rectangle": 
+        paint.drawRectEntry(x_1, y_1, x_2, y_2)
+    else: 
+        paint.drawCircleEntry(x_1, y_1, x_2, y_2)
+
 
 def update_inputs(event):
-    # x1.delete(0, END)
-    # y1.delete(0, END)
-    # x2.delete(0, END)
-    # y2.delete(0, END)
-    # circle_radius.delete(0, END)
-    # circle_x.delete(0, END)
-    # circle_y.delete(0, END)
     
     for widget in input_frame.winfo_children():
         widget.grid_forget()
     
     labels = {
         "Line&Rect": ["x1:", "y1:", "x2:", "y2:"],
-        "Circle": ["x:", "y:", "radius:"]
     }
     
     selected_shape = shape_combo_str.get()
     paint.comboShape(selected_shape)
-    if selected_shape == "Line" or selected_shape == "Rectangle":
-        
-        Label(input_frame, text=labels["Line&Rect"][0], bg="grey").grid(row=0, column=0, sticky="e")
-        x1.grid(row=0, column=1, sticky="w")
-        
-        Label(input_frame, text=labels["Line&Rect"][1], bg="grey").grid(row=1, column=0, sticky="e")
-        y1.grid(row=1, column=1, sticky="w")
-        
-        Label(input_frame, text=labels["Line&Rect"][2], bg="grey").grid(row=2, column=0, sticky="e")
-        x2.grid(row=2, column=1, sticky="w")
-        
-        Label(input_frame, text=labels["Line&Rect"][3], bg="grey").grid(row=3, column=0, sticky="e")
-        y2.grid(row=3, column=1, sticky="w")
-        
-        Button(input_frame, text="Draw", command=drawButton, 
-                                        width=12).grid(row=4, column=0, columnspan=2)
-
-    elif selected_shape == "Circle":
-        Label(input_frame, text=labels["Circle"][0], bg="grey").grid(row=0, column=0, sticky="e")
-        circle_x.grid(row=0, column=1, sticky="w")
-        
-        Label(input_frame, text=labels["Circle"][1], bg="grey").grid(row=1, column=0, sticky="e")
-        circle_y.grid(row=1, column=1, sticky="w")
-        
-        Label(input_frame, text=labels["Circle"][2], bg="grey").grid(row=2, column=0, sticky="e")
-        circle_radius.grid(row=2, column=1, sticky="w")
-
-        Button(input_frame, text="Draw", command= drawButton, width=12).grid(row=4, column=0, columnspan=2)
-
     
+    Label(input_frame, text=labels["Line&Rect"][0], bg="grey").grid(row=0, column=0, sticky="e")
+    x1.grid(row=0, column=1, sticky="w")
+    
+    Label(input_frame, text=labels["Line&Rect"][1], bg="grey").grid(row=1, column=0, sticky="e")
+    y1.grid(row=1, column=1, sticky="w")
+    
+    Label(input_frame, text=labels["Line&Rect"][2], bg="grey").grid(row=2, column=0, sticky="e")
+    x2.grid(row=2, column=1, sticky="w")
+    
+    Label(input_frame, text=labels["Line&Rect"][3], bg="grey").grid(row=3, column=0, sticky="e")
+    y2.grid(row=3, column=1, sticky="w")
+
+    Button(input_frame, text="Draw", command= drawButton, width=12).grid(row=4, column=0, columnspan=2)
+        
+
 def importSerialize():
     file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json"), 
                                                            ("All Files", "*.*")])
@@ -460,7 +422,35 @@ def exportSerialize():
         with open (file_path, "w") as file:
             json.dump(canvas_data, file)
         print("File saved to: ", file_path)
+
+def clearInputs():
+    x1.delete(0, END)
+    y1.delete(0, END)
+    x2.delete(0, END)
+    y2.delete(0, END)
+    circle_radius.delete(0, END)
+    circle_x.delete(0, END)
+    circle_y.delete(0, END)
+    
+
+def showSelShapeVal(shape):
+    clearInputs()
+    
+    shape_x1 = round(int(shape.x0))
+    shape_y1 = round(int(shape.y0))
+    shape_x2 = round(int(shape.x1))
+    shape_y2 = round(int(shape.y1))
+    print(shape_x1, shape_y1, shape_x2, shape_y2)
+    x1.insert(0, shape_x1)
+    y1.insert(0, shape_y1)
+    x2.insert(0, shape_x2)
+    y2.insert(0, shape_y2)
+    if shape.className == "Circle":
+        circle_x.insert(0, round(shape.x))
+        circle_y.insert(0, round(shape.y))
+        circle_radius.insert(0, round(shape.radius))
         
+    
 root = Tk()
 root.title("Paint - Sak Jakub")
 # root.minsize(800, 600)
