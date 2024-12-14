@@ -1,30 +1,13 @@
-from tkinter import *
-from threading import Thread
-
-
-
-class CustomThread(Thread):
-    def __init__(self, group=None, target=None, name=None,
-                 args=(), kwargs={}, Verbose=None):
-        Thread.__init__(self, group, target, name, args, kwargs)
-        self._return = None
- 
-    def run(self):
-        if self._target is not None:
-            self._return = self._target(*self._args, **self._kwargs)
-             
-    def join(self, *args, **kwargs):
-        # super().join(*args, **kwargs)
-        Thread.join(self, *args)
-        return self._return
-
-# Brief:
-#   filters lines from comments
-#   splits lines into values
-# Return:
-#   list of values ['1','2','3'...]
-
+from tkinter import PhotoImage, messagebox
+from threads import CustomThread
+from PIL import ImageTk, Image
 def filterPPM3(lines):
+    # Brief:
+    #   filters lines from comments
+    #   splits lines into values
+    # Return:
+    #   list of values ['1','2','3'...]
+    
     filtered_values = []
     for a in lines:
         if '#' in a:
@@ -36,12 +19,14 @@ def mergeLine(pixels, max_val):
     pixels_len = len(pixels)
     line_data = ""
     for i in range(0, pixels_len, 3):
-        r = int(int(pixels[i])*255 // max_val)
-        g = int(int(pixels[i+1])*255// max_val)
-        b = int(int(pixels[i+2])*255// max_val)
+        r = int(pixels[i])*255 // max_val
+        g = int(pixels[i+1])*255// max_val
+        b = int(pixels[i+2])*255// max_val
         line_data += '"#%02x%02x%02x" ' % (r, g, b)
     ret_val = "{" + line_data + "}"
     return ret_val
+
+
 
 
 def loadPPM(file_path):
@@ -50,6 +35,7 @@ def loadPPM(file_path):
             height = 0
             max_val = 0
             data = []
+            threads = []
             
             header = f.readline().decode().strip() 
 
@@ -84,7 +70,8 @@ def loadPPM(file_path):
                  
                 data_len = len(data)
                 
-                photo_image = PhotoImage(width=width, height=height)        
+                photo_image = PhotoImage(width=width, height=height)      
+                
 
                 threads = []
                 filtered_data = []
@@ -127,54 +114,57 @@ def loadPPM(file_path):
                 return photo_image   
             
             elif(header == 'P6'):
-                data = f.read()
-                data = data.decode('ascii', errors='ignore')
-                # split file by \n chars into list of lines
+                # Read headers
+                for line in f:
+                    line = line.decode('ascii', errors='ignore')
+                    line = line.replace('\n','')
+                    if '#' in line:
+                        line = line.split('#')[0]
+                    if line:
+                        line_val = line.split()
+                        for a in line_val:
+                            data.append(a)
+                    if len(data) >= 3:
+                        width = int(data.pop(0))
+                        height = int(data.pop(0))
+                        max_val = int(data.pop(0))
+                        break                      
+                
+                photo_image = PhotoImage(width=width, height=height) 
+                data = list(f.read())
+                data_len = len(data)
+                first_half = width//2
                 
                 
-                # read values for size
-                # divide by rgb and put into image
+                for a in range(0, data_len, width*3):           # Thread each row
+                    line_end = a+width*3                      # line starts at a ends at line_chunk
+                    zakres = data[a:line_end]
+                    first_part = data[a:a+first_half*3]                 #   
+                    second_part = data[a+first_half*3:line_end]  #
+                    if data_len > line_end:
+                        
+                        threads.append(CustomThread(target=mergeLine, args=(first_part,max_val,)))
+                        threads.append(CustomThread(target=mergeLine, args=(second_part,max_val,)))
+                        
+                    else:
+                        threads.append(CustomThread(target=mergeLine, args=(first_part,max_val,)))
+                        threads.append(CustomThread(target=mergeLine, args=(data[a+first_half*3:line_end],max_val,)))
+                    
+                    
+                for a in threads:
+                    a.start()
+                for a in range(len(threads)):
+                    line = threads[a].join()
+                    photo_image.put(line, (0, a))
+
+
+
+                
+                return photo_image   
             else:
+                messagebox.showerror("Error", "Bad PPM header")
                 raise ValueError("BAD PPM file")
-            
-              
-            
-            
-            
-            # if header == "P3":
-            #     for index, line in enumerate(filtered_lines):
-            #         if(index not in [0,1,2]):
-            #             data.append(list(map(int, line.split())))
-
-            # elif header == "P6":
-            #     # width * 3
-            #     data = list(f.read())
-            #     x = width*3
-            #     for index, line in enumerate(filtered_lines):
-            #         if index not in [0,1,2]:
-            #             data.append(line)        
-                
-                
-                    
                 
 
-            # pixels = []
-            # photo_image = PhotoImage(width=width, height=height)
             
-            # for j in range(len(data)):
-            #     line = data[j]
-            #     pixel_line = []
-            #     for i in range(0, len(line),3):
-            #         try:
-            #             r,g,b = data[j][i], data[j][i+1], data[j][i+2]
-            #             pixel_line.append((r,g,b))
-            #         except IndexError:
-            #             print("Index error")
-            #             print(r,g,b)
-            #             print(i,j)
-            #     pixels.append(pixel_line)
-
-            # for y,line in enumerate(pixels):
-            #     for x,rgb in enumerate(line):
-            #         photo_image.put("#%02x%02x%02x" % (rgb[0],rgb[1],rgb[2]), (x, y))
-                    
+    
