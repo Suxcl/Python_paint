@@ -139,8 +139,8 @@ def loadPPM(file_path):
                 for a in range(0, data_len, width*3):           # Thread each row
                     line_end = a+width*3                      # line starts at a ends at line_chunk
                     zakres = data[a:line_end]
-                    first_part = data[a:a+first_half*3]                 #   
-                    second_part = data[a+first_half*3:line_end]  #
+                    first_part = data[a:a+first_half*3]                   
+                    second_part = data[a+first_half*3:line_end]  
                     if data_len > line_end:
                         
                         threads.append(CustomThread(target=mergeLine, args=(first_part,max_val,)))

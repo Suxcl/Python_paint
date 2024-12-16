@@ -157,12 +157,7 @@ class ConverterWindow:
         self.k_from_value.pack(side=tk.LEFT, pady=5, padx=5)
         
         
-        # preview RGB to CMYK
         
-    
-        self.canvas_1 = tk.Canvas(self.upper_left_frame, width=100, height=20)
-        self.canvas_1.create_rectangle(0, 0, 100, 20, fill="#FF5733", outline="")
-        self.canvas_1.pack(side=tk.LEFT,pady=5, padx=5)
 
         
         #
@@ -286,15 +281,34 @@ class ConverterWindow:
         self.b_from_value = ttk.Label(self.b_from_frame, text="100")
         self.b_from_value.pack(side=tk.LEFT, pady=5, padx=5)
         
-        # preview CMYK to RGB
-
-        self.canvas_2 = tk.Canvas(self.upper_right_frame, width=100, height=20)
-        self.canvas_2.create_rectangle(0, 0, 100, 20, fill="#FF5733", outline="")
-        self.canvas_2.pack(side=tk.LEFT,pady=5, padx=5)
         
         #
-        # lower frame CUBE
+        # lower frame
         #
+        
+        self.lower_left_frame = tk.Frame(self.lower_frame, width=400, height=400, bg="lightblue")
+        self.lower_left_frame.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.lower_left_frame.pack_propagate(False)
+        
+        self.lower_right_frame = tk.Frame(self.lower_frame, width=400, height=400, bg="lightblue")
+        self.lower_right_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
+        self.lower_right_frame.pack_propagate(False)
+        
+        
+        # preview CMYK to RGB
+
+        self.canvas_2 = tk.Canvas(self.lower_right_frame, width=400, height=400)
+        self.canvas_2.create_rectangle(0, 0, 400, 400, fill="#FF5733", outline="")
+        self.canvas_2.pack(side=tk.LEFT)
+        
+        
+        # preview RGB to CMYK
+        
+    
+        self.canvas_1 = tk.Canvas(self.lower_left_frame, width=400, height=400)
+        self.canvas_1.create_rectangle(0, 0, 400, 400, fill="#FF5733", outline="")
+        self.canvas_1.pack(side=tk.LEFT)
+
         
     def cmyk_to_rgb(self, c, m, y, k):
         c,m,y,k = int(c), int(m), int(y), int(k)
@@ -409,7 +423,7 @@ class ConverterWindow:
         self.canvas_1.delete("all")
         rgb_hex = '#%02x%02x%02x' % (int(r), int(g), int(b))
         # rgb_hex = '#{:02x}{:02x}{:02x}'.format(self.rgb[0], self.rgb[1], self.rgb[2])
-        self.canvas_1.create_rectangle(0, 0, 100, 20, fill=rgb_hex, outline="")
+        self.canvas_1.create_rectangle(0, 0, 400, 400, fill=rgb_hex, outline="")
         
     def entry_fun_2(self,value):
         c = self.c_to_value_entry.get()
@@ -486,7 +500,7 @@ class ConverterWindow:
         
         self.canvas_2.delete("all")
         rgb_hex = '#%02x%02x%02x' % (int(rgb[0]), int(rgb[1]), int(rgb[2]))
-        self.canvas_2.create_rectangle(0, 0, 100, 20, fill=rgb_hex, outline="")
+        self.canvas_2.create_rectangle(0, 0, 400, 400, fill=rgb_hex, outline="")
         
         
 if __name__ == "__main__":

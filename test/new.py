@@ -1,89 +1,57 @@
-import tkinter as tk
-import OpenGL
-from OpenGL.GL import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
-from tkinter import Frame
-import sys
+from PIL import Image
+import numpy as np
 
-class OpenGLCanvas(Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.pack(fill=tk.BOTH, expand=tk.YES)
-        self.initialize_opengl()
-        self.after(10, self.draw)
+    
+# img_array = np.array(self.PILImage)   
+# D = 0
 
-    def initialize_opengl(self):
-        if not callable(glutCreateWindow):
-            raise RuntimeError("GLUT is not properly installed or glutCreateWindow is unavailable.")
+# hist_r = np.histogram(img_array[:,:,0], bins=256, range=(0,255))[0]
+# hist_g = np.histogram(img_array[:,:,1], bins=256, range=(0,255))[0]
+# hist_b = np.histogram(img_array[:,:,2], bins=256, range=(0,255))[0]
 
-        self.glut_id = glutCreateWindow(b"3D Cube")
-        glutDisplayFunc(self.render_scene)
-        glEnable(GL_DEPTH_TEST)
-        glClearColor(0.1, 0.1, 0.1, 1)
+hist = [2,5,0,3,9,1]
 
-    def render_scene(self):
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glLoadIdentity()
-        gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0)
+# get amount of pixels
+pixel_count = 
 
-        # Draw a cube
-        glBegin(GL_QUADS)
-        glColor3f(1, 0, 0)  # Red
-        glVertex3f(1, 1, -1)
-        glVertex3f(-1, 1, -1)
-        glVertex3f(-1, 1, 1)
-        glVertex3f(1, 1, 1)
 
-        glColor3f(0, 1, 0)  # Green
-        glVertex3f(1, -1, 1)
-        glVertex3f(-1, -1, 1)
-        glVertex3f(-1, -1, -1)
-        glVertex3f(1, -1, -1)
+D_r = []
+D_g = []
+D_b = []
+r_sum = 0
+g_sum = 0
+b_sum = 0
+# calculate D
+for i in range(len(hist_r)):
+    r_sum = r_sum + hist_r[i]
+    g_sum = g_sum + hist_g[i]
+    b_sum = b_sum + hist_b[i]
+    D_r.append(r_sum/pixel_count)
+    D_g.append(g_sum/pixel_count)
+    D_b.append(b_sum/pixel_count)
 
-        glColor3f(0, 0, 1)  # Blue
-        glVertex3f(1, 1, 1)
-        glVertex3f(-1, 1, 1)
-        glVertex3f(-1, -1, 1)
-        glVertex3f(1, -1, 1)
+# find first D non-zero value
+non_zero_D_r = 0
+non_zero_D_g = 0
+non_zero_D_b = 0
+for i in range(len(D_r)):
+    if D_r[i] != 0:
+        non_zero_D_r = D_r[i]
+        break
+for i in range(len(D_g)):
+    if D_g[i] != 0:
+        non_zero_D_g = D_g[i]
+        break
+for i in range(len(D_b)):
+    if D_b[i] != 0:
+        non_zero_D_b = D_b[i]
+        break
 
-        glColor3f(1, 1, 0)  # Yellow
-        glVertex3f(1, -1, -1)
-        glVertex3f(-1, -1, -1)
-        glVertex3f(-1, 1, -1)
-        glVertex3f(1, 1, -1)
-
-        glColor3f(1, 0, 1)  # Magenta
-        glVertex3f(-1, 1, 1)
-        glVertex3f(-1, 1, -1)
-        glVertex3f(-1, -1, -1)
-        glVertex3f(-1, -1, 1)
-
-        glColor3f(0, 1, 1)  # Cyan
-        glVertex3f(1, 1, -1)
-        glVertex3f(1, 1, 1)
-        glVertex3f(1, -1, 1)
-        glVertex3f(1, -1, -1)
-        glEnd()
-
-        glutSwapBuffers()
-
-    def draw(self):
-        glutPostRedisplay()
-        self.after(16, self.draw)  # Approx. 60 FPS
-
-def main():
-    root = tk.Tk()
-    root.title("3D Cube in Tkinter with OpenGL")
-    root.geometry("800x600")
-
-    try:
-        OpenGLCanvas(root)
-    except RuntimeError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
-
-    root.mainloop()
-
-if __name__ == "__main__":
-    main()
+LUT = [0] * 256
+# calculate LUT
+for a in range(len(D_r)):
+    a_licznik = D_r[a] - non_zero_D_r
+    a_mianownik = 1 - non_zero_D_r
+    a_a = a_licznik/a_mianownik
+    a_b = a_a * 255
+    LUT[a] = a_b
